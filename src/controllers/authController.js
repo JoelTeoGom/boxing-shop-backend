@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const cookie = require('cookie');
 const AppDataSource = require('../data-source');
 const User = require('../models/User');
-const cookie = require('cookie'); // Importar la librería cookie
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -63,7 +63,22 @@ const login = async (req, res) => {
     }
 };
 
+const logout = (req, res) => {
+    // Eliminar la cookie JWT
+    const serializedCookie = cookie.serialize('token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 0, // Expira inmediatamente
+        path: '/',
+    });
+
+    res.setHeader('Set-Cookie', serializedCookie);
+    res.status(200).json({ message: 'Logout successful' });
+};
+
 module.exports = {
     register,
     login,
+    logout
 };

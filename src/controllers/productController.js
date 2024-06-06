@@ -1,27 +1,12 @@
 const AppDataSource = require('../data-source');
 const Product = require('../models/Product');
-const Gloves = require('../models/Gloves');
-const Boots = require('../models/Boots');
-const Helmets = require('../models/Helmets');
-const Heavybag = require('../models/HeavyBag');
-const Manoplas = require('../models/Manoplas');
+
 
 const getAllProducts = async (req, res) => {
     const productRepository = AppDataSource.getRepository(Product);
-    const { category, brand } = req.query;
 
     try {
-        let query = productRepository.createQueryBuilder('product');
-
-        if (category) {
-            query = query.andWhere('product.category = :category', { category });
-        }
-
-        if (brand) {
-            query = query.andWhere('product.brand = :brand', { brand });
-        }
-
-        const products = await query.getMany();
+        const products = await productRepository.find();
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -33,7 +18,7 @@ const getProductById = async (req, res) => {
     const productRepository = AppDataSource.getRepository(Product);
 
     try {
-        const product = await productRepository.findOneBy({ id });
+        const product = await productRepository.findOne({ where: { id } });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -44,69 +29,67 @@ const getProductById = async (req, res) => {
 };
 
 const createProduct = async (req, res) => {
-    const {
-        name, price, type, brand, stock, description, image, ounces, size, weight
-    } = req.body;
+    const { name, description, image, price, brand, type, stock } = req.body;
+    const productRepository = AppDataSource.getRepository(Product);
 
     try {
-        let product;
-        await AppDataSource.transaction(async transactionalEntityManager => {
-            product = transactionalEntityManager.create(Product, {
-                name,
-                price,
-                brand,
-                description,
-                image,
-                category: type,
-            });
-            await transactionalEntityManager.save(product);
-
-            switch (type) {
-                case 'gloves':
-                    const gloves = transactionalEntityManager.create(Gloves, {
-                        productId: product.id,
-                        size,
-                        stock
-                    });
-                    await transactionalEntityManager.save(Gloves, gloves);
-                    break;
-                case 'boots':
-                    const boots = transactionalEntityManager.create(Boots, {
-                        productId: product.id,
-                        size,
-                        stock
-                    });
-                    await transactionalEntityManager.save(Boots, boots);
-                    break;
-                case 'helmets':
-                    const helmets = transactionalEntityManager.create(Helmets, {
-                        productId: product.id,
-                        size,
-                        stock
-                    });
-                    await transactionalEntityManager.save(Helmets, helmets);
-                    break;
-                case 'heavybag':
-                    const heavybag = transactionalEntityManager.create(Heavybag, {
-                        productId: product.id,
-                        weight,
-                        stock
-                    });
-                    await transactionalEntityManager.save(HeavyBag, heavybag);
-                    break;
-                case 'manoplas':
-                    const manoplas = transactionalEntityManager.create(Manoplas, {
-                        productId: product.id,
-                        stock
-                    });
-                    await transactionalEntityManager.save(Manoplas, manoplas);
-                    break;
-                default:
-                    throw new Error('Invalid product type');
-            }
+        const product = productRepository.create({
+            name,
+            description,
+            image,
+            price,
+            brand,
+            type,
+            stock,
         });
+        await productRepository.save(product);
 
         res.status(201).json({ message: 'Product created successfully', product });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+const updateProduct = async (req, res) => {
+    const { id } = req.params;
+    const { name, description, image, price, brand, type, stock } = req.body;
+    const productRepository = AppDataSource.getRepository(Product);
+
+    try {
+        const product = await productRepository.findOne({ where: { id } });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        product.name = name || product.name;
+        product.description = description || product.description;
+        product.image = image || product.image;
+        product.price = price || product.price;
+        product.brand = brand || product.brand;
+        product.type = type || product.type;
+        product.stock = stock || product.stock;
+
+        await productRepository.save(product);
+
+        res.status(200).json({ message: 'Product updated successfully', product });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+const deleteProduct = async (req, res) => {
+    const { id } = req.params;
+    const productRepository = AppDataSource.getRepository(Product);
+
+    try {
+        const product = await productRepository.findOne({ where: { id } });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        await productRepository.remove(product);
+
+        res.status(200).json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -115,5 +98,8 @@ const createProduct = async (req, res) => {
 module.exports = {
     getAllProducts,
     getProductById,
-    createProduct
+    createProduct,
+    updateProduct,
+    deleteProduct,
+
 };
