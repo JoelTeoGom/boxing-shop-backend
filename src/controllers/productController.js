@@ -1,18 +1,38 @@
 const AppDataSource = require('../data-source');
 const Product = require('../models/Product');
 
-
+// Obtener todos los productos con filtrado opcional por brand, type y price range
 const getAllProducts = async (req, res) => {
     const productRepository = AppDataSource.getRepository(Product);
+    const { brand, type, minPrice, maxPrice } = req.query;  // Obtiene brand, type y rango de precios de la query
 
     try {
-        const products = await productRepository.find();
+        let query = productRepository.createQueryBuilder('product');
+
+        if (brand) {
+            query = query.andWhere('product.brand = :brand', { brand });
+        }
+
+        if (type) {
+            query = query.andWhere('product.type = :type', { type });
+        }
+
+        if (minPrice && maxPrice) {
+            query = query.andWhere('product.price BETWEEN :minPrice AND :maxPrice', { minPrice, maxPrice });
+        } else if (minPrice) {
+            query = query.andWhere('product.price >= :minPrice', { minPrice });
+        } else if (maxPrice) {
+            query = query.andWhere('product.price <= :maxPrice', { maxPrice });
+        }
+
+        const products = await query.getMany();
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
+// Obtener producto por ID
 const getProductById = async (req, res) => {
     const { id } = req.params;
     const productRepository = AppDataSource.getRepository(Product);
@@ -28,6 +48,7 @@ const getProductById = async (req, res) => {
     }
 };
 
+// Crear nuevo producto
 const createProduct = async (req, res) => {
     const { name, description, image, price, brand, type, stock } = req.body;
     const productRepository = AppDataSource.getRepository(Product);
@@ -50,6 +71,7 @@ const createProduct = async (req, res) => {
     }
 };
 
+// Actualizar producto por ID
 const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { name, description, image, price, brand, type, stock } = req.body;
@@ -77,6 +99,7 @@ const updateProduct = async (req, res) => {
     }
 };
 
+// Eliminar producto por ID
 const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const productRepository = AppDataSource.getRepository(Product);
@@ -95,11 +118,41 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+// Buscar productos por nombre
+const searchProductsByName = async (req, res) => {
+    const { name } = req.query; // Obtiene el parámetro de búsqueda 'name'
+    const productRepository = AppDataSource.getRepository(Product);
+
+    try {
+        const products = await productRepository.createQueryBuilder('product')
+            .where('product.name ILIKE :name', { name: `%${name}%` })
+            .getMany();
+
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Obtener historial de compras del usuario
+const getUserPurchaseHistory = async (req, res) => {
+    const { id } = req.user;  // Obtiene el ID del usuario autenticado
+    const orderRepository = AppDataSource.getRepository(Order);
+
+    try {
+        const orders = await orderRepository.find({ where: { userId: id }, relations: ['product'] });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
-
+    searchProductsByName,
+    getUserPurchaseHistory,
 };
