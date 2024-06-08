@@ -46,6 +46,7 @@ const createOrder = async (req, res) => {
     }
 };
 
+
 // Obtener el historial de compras del usuario
 const getUserPurchaseHistory = async (req, res) => {
     const userId = req.user.id;  // Obtiene el ID del usuario autenticado

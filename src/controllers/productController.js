@@ -122,7 +122,7 @@ const deleteProduct = async (req, res) => {
 const searchProductsByName = async (req, res) => {
     const { name } = req.query; // Obtiene el parámetro de búsqueda 'name'
     const productRepository = AppDataSource.getRepository(Product);
-
+    console.log(name);
     try {
         const products = await productRepository.createQueryBuilder('product')
             .where('product.name ILIKE :name', { name: `%${name}%` })

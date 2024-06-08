@@ -77,8 +77,26 @@ const logout = (req, res) => {
     res.status(200).json({ message: 'Logout successful' });
 };
 
+
+const validateToken = (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(401).json({ message: 'Invalid token' });
+        }
+        res.status(200).json({ message: 'Token is valid' });
+    });
+};
+
+
+
 module.exports = {
     register,
     login,
-    logout
+    logout,
+    validateToken,
 };
