@@ -36,6 +36,10 @@ module.exports = new EntitySchema({
         stock: {
             type: 'int',
             nullable: false,
+        },
+        stripePriceId: {
+            type: 'varchar',
+            nullable: false,
         }
     }
 });
