@@ -10,11 +10,11 @@ module.exports = new EntitySchema({
             generated: 'uuid',
         },
         userId: {
-            type: 'int',
+            type: 'uuid',
             nullable: false,
         },
         productId: {
-            type: 'int',
+            type: 'uuid',
             nullable: false,
         },
         quantity: {
@@ -27,6 +27,11 @@ module.exports = new EntitySchema({
             target: 'Product',
             type: 'many-to-one',
             joinColumn: { name: 'productId' },
+        },
+        user: {
+            target: 'User',
+            type: 'many-to-one',
+            joinColumn: { name: 'userId' },
         },
     },
 });

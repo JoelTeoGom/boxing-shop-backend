@@ -10,7 +10,7 @@ module.exports = new EntitySchema({
             generated: 'uuid',
         },
         userId: {
-            type: 'int',
+            type: 'uuid',
             nullable: false,
         },
         createdAt: {

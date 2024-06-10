@@ -2,6 +2,7 @@ const AppDataSource = require('../data-source');
 const Order = require('../models/Order');
 const OrderProduct = require('../models/OrderProduct');
 const Product = require('../models/Product');
+const Cart = require('../models/Cart');
 
 // Crear un nuevo pedido
 const createOrder = async (req, res) => {
@@ -15,7 +16,8 @@ const createOrder = async (req, res) => {
     const orderRepository = AppDataSource.getRepository(Order);
     const orderProductRepository = AppDataSource.getRepository(OrderProduct);
     const productRepository = AppDataSource.getRepository(Product);
-
+    const cartRepository = AppDataSource.getRepository(Cart);
+    
     try {
         // Crear el pedido
         const order = orderRepository.create({ userId });
@@ -40,25 +42,62 @@ const createOrder = async (req, res) => {
             await productRepository.save(product);
         }
 
+        // Eliminar todos los artículos del carrito del usuario
+        await cartRepository.delete({ userId });
+
         res.status(201).json({ message: 'Order created successfully', order });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
 
-
 // Obtener el historial de compras del usuario
 const getUserPurchaseHistory = async (req, res) => {
-    const userId = req.user.id;  // Obtiene el ID del usuario autenticado
+    const userId = req.user.id;
     const orderRepository = AppDataSource.getRepository(Order);
+    const orderProductRepository = AppDataSource.getRepository(OrderProduct);
 
     try {
-        const orders = await orderRepository.find({ where: { userId }, relations: ['products'] });
-        res.json(orders);
+        console.log('userId', userId);
+
+        // Paso 1: Buscar todas las órdenes del usuario
+        const orders = await orderRepository.find({
+            where: { userId },
+            order: { createdAt: 'DESC' }  // Ordenar por fecha de creación descendente
+        });
+
+        if (orders.length === 0) {
+            return res.status(404).json({ message: 'No orders found for this user' });
+        }
+
+        // Paso 2: Para cada orden, buscar los productos asociados y su cantidad
+        const orderDetails = await Promise.all(orders.map(async (order) => {
+            const orderProducts = await orderProductRepository.find({
+                where: { orderId: order.id },
+                relations: ['product']
+            });
+
+            return {
+                ...order,
+                products: orderProducts.map(op => ({
+                    productId: op.product.id,
+                    productName: op.product.name, 
+                    imageUrl: op.product.image, 
+                    quantity: op.quantity,
+                }))
+            };
+        }));
+
+        res.json(orderDetails);
+        console.log(orderDetails);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+
+
+
 
 // Obtener un pedido por ID
 const getOrderById = async (req, res) => {
@@ -80,5 +119,4 @@ module.exports = {
     createOrder,
     getUserPurchaseHistory,
     getOrderById,
-
 };

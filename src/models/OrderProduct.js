@@ -6,11 +6,11 @@ module.exports = new EntitySchema({
     columns: {
         orderId: {
             primary: true,
-            type: 'int',
+            type: 'uuid',
         },
         productId: {
             primary: true,
-            type: 'int',
+            type: 'uuid',
         },
         quantity: {
             type: 'int',

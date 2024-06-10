@@ -9,21 +9,29 @@ const addToCart = async (req, res) => {
     const cartRepository = AppDataSource.getRepository(Cart);
     const productRepository = AppDataSource.getRepository(Product);
 
+    console.log('productId', productId);
+    console.log('quantity', quantity);
+    console.log('userId', userId);
+
     try {
         const product = await productRepository.findOne({ where: { id: productId } });
+        console.log('product', product.id);
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
         let cartItem = await cartRepository.findOne({ where: { userId, productId } });
-
+       
         if (cartItem) {
             cartItem.quantity += quantity;
         } else {
+            console.log('creating cart item')
+            console.log('userId', userId);
             cartItem = cartRepository.create({ userId, productId, quantity });
         }
-
+        console.log('cartItem', cartItem.id);
         await cartRepository.save(cartItem);
+
         res.status(200).json({ message: 'Product added to cart' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });

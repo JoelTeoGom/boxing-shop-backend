@@ -13,16 +13,22 @@ dotenv.config(); // Cargar variables de entorno desde .env
 const app = express();
 
 connectDB();
-app.use('/api/stripe', stripeRouter);
+
+
+
+
 app.use(express.json());
 app.use(cookieParser());
 
-const corsOptions = {
+
+  
+  const corsOptions = {
   origin: 'http://localhost:4000', // El origen del frontend
   credentials: true, // Permitir envío de cookies y cabeceras de autorización
   };
-  
   app.use(cors(corsOptions));
+
+  app.use('/api/stripe', stripeRouter);
   
   app.use('/api/auth', authRoutes);
   app.use('/api/products', productRoutes);
