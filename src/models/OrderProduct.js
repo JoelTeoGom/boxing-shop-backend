@@ -14,7 +14,7 @@ module.exports = new EntitySchema({
         },
         quantity: {
             type: 'int',
-            nullable: true,
+            nullable: false,
         },
     },
     relations: {

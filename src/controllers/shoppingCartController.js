@@ -83,8 +83,10 @@ const getUserPurchaseHistory = async (req, res) => {
                     productId: op.product.id,
                     productName: op.product.name, 
                     imageUrl: op.product.image, 
+                    price: op.product.price, // Añadir el precio del producto
                     quantity: op.quantity,
-                }))
+                })),
+                total: orderProducts.reduce((acc, op) => acc + (op.product.price * op.quantity), 0) // Calcular el total de la orden
             };
         }));
 
