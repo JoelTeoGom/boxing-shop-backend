@@ -1,4 +1,6 @@
 const { MigrationInterface, QueryRunner } = require("typeorm");
+const path = require('path');
+const fs = require('fs');
 
 module.exports = class Migration1718108391165 {
     name = 'Migration1718108391165'
@@ -18,6 +20,10 @@ module.exports = class Migration1718108391165 {
         await queryRunner.query(`ALTER TABLE "orders" ADD CONSTRAINT "FK_151b79a83ba240b0cb31b2302d1" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "cart" ADD CONSTRAINT "FK_371eb56ecc4104c2644711fa85f" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "cart" ADD CONSTRAINT "FK_756f53ab9466eb52a52619ee019" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+
+        const seedsFilePath = path.resolve(__dirname, '../../sql/seed.sql');
+        const seedsQuery = fs.readFileSync(seedsFilePath, 'utf-8');
+        await queryRunner.query(seedsQuery);
     }
 
     async down(queryRunner) {
